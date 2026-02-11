@@ -1,0 +1,33 @@
+spring.application.name: api-gateway
+
+jwt.secretKey: sjdfsdkjgrejkgnkvjxfnbkjsdnfjkbnkdsfhskdcbnk
+
+server.port : 9876
+eureka.client.service-url.defaultZone: http://discovery-server:8761/eureka
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/v1/users/**
+          filters:
+            - StripPrefix=2
+
+        - id: post-service
+          uri: lb://POST-SERVICE
+          predicates:
+            - Path=/api/v1/posts/**
+          filters:
+            - StripPrefix=2
+            - name: AuthenticationFilter
+
+        - id: connection-service
+          uri: lb://CONNECTION-SERVICE
+          predicates:
+            - Path=/api/v1/connections/**
+          filters:
+            - StripPrefix=2
+            - name: AuthenticationFilter

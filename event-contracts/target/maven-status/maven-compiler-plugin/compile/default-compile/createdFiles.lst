@@ -1,0 +1,5 @@
+org\example\events\UserCreatedEvents.class
+org\example\events\AcceptConnectionRequestEvent$AcceptConnectionRequestEventBuilder.class
+org\example\events\AcceptConnectionRequestEvent.class
+org\example\events\SendConnectionRequestEvent$SendConnectionRequestEventBuilder.class
+org\example\events\SendConnectionRequestEvent.class
