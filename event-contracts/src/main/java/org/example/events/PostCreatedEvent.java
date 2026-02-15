@@ -1,4 +1,4 @@
-package com.sheemab.linkedin.post_service.Event;
+package org.example.events;
 
 import lombok.Builder;
 import lombok.Data;

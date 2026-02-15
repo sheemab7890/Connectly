@@ -1,3 +1,6 @@
 C:\PROJECT OF SPRING BOOT\linkedIn app\event-contracts\src\main\java\org\example\events\SendConnectionRequestEvent.java
+C:\PROJECT OF SPRING BOOT\linkedIn app\event-contracts\src\main\java\org\example\events\PostCommentEvent.java
+C:\PROJECT OF SPRING BOOT\linkedIn app\event-contracts\src\main\java\org\example\events\PostCreatedEvent.java
+C:\PROJECT OF SPRING BOOT\linkedIn app\event-contracts\src\main\java\org\example\events\PostLikedEvent.java
 C:\PROJECT OF SPRING BOOT\linkedIn app\event-contracts\src\main\java\org\example\events\AcceptConnectionRequestEvent.java
 C:\PROJECT OF SPRING BOOT\linkedIn app\event-contracts\src\main\java\org\example\events\UserCreatedEvents.java
