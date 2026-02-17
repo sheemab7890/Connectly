@@ -4,13 +4,13 @@ import com.sheemab.linkedin.post_service.DTOs.PostCommentsDto;
 import com.sheemab.linkedin.post_service.DTOs.PostCommentsRequest;
 import com.sheemab.linkedin.post_service.Entities.Post;
 import com.sheemab.linkedin.post_service.Entities.PostComments;
-import com.sheemab.linkedin.post_service.Event.PostCommentEvent;
 import com.sheemab.linkedin.post_service.Exception.BadRequestException;
 import com.sheemab.linkedin.post_service.Exception.ResourceNotFoundException;
 import com.sheemab.linkedin.post_service.Repositories.CommentsRepository;
 import com.sheemab.linkedin.post_service.Repositories.PostRepository;
-import com.sheemab.linkedin.post_service.auth.UserContextHolder;
+import com.sheemab.linkedin.post_service.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import org.example.events.PostCommentEvent;
 import org.modelmapper.ModelMapper;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -26,10 +26,10 @@ public class CommentsService {
     private final CommentsRepository commentsRepository;
     private final PostRepository postRepository;
     private final ModelMapper modelMapper;
-    private final KafkaTemplate<Long , PostCommentEvent> kafkaTemplate;
+    private final KafkaTemplate<String , Object> kafkaTemplate;
 
     public PostCommentsDto commentOnPost(PostCommentsRequest postCommentsRequest, Long postId) {
-        Long userId = UserContextHolder.getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
 
         Post post = postRepository.findById(postId).orElseThrow(
                 ()->  new ResourceNotFoundException("Post not found with id:"+postId)
@@ -48,7 +48,7 @@ public class CommentsService {
                 .comment(savedComments.getComment())
                 .build();
 
-        kafkaTemplate.send("post-comment-topic",postId ,postCommentEvent);
+        kafkaTemplate.send("post-comment-topic", String.valueOf(postId),postCommentEvent);
 
         return modelMapper.map(savedComments , PostCommentsDto.class);
 

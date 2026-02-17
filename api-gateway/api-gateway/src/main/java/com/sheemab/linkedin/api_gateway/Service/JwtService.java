@@ -20,6 +20,15 @@ public class JwtService {
         return Keys.hmacShaKeyFor(jwtSecretKey.getBytes(StandardCharsets.UTF_8));
     }
 
+    // How to validate the token
+    public void validate(String token) {
+        Jwts.parser()
+                .verifyWith(getSecretKey())
+                .build()
+                .parseSignedClaims(token);
+    }
+
+    // How to get anything from token
     public String getUserIdFromToken(String token){
         Claims claims = Jwts.parser()
                 .verifyWith(getSecretKey())
@@ -30,6 +39,7 @@ public class JwtService {
 //        return claims.getId();
     }
 
+    // How to get userRoles from token
     public List<String> getUserRoleFromToken(String token){
         Claims claims = Jwts.parser()
                 .verifyWith(getSecretKey())

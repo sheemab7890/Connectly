@@ -32,3 +32,15 @@ public class AuthController {
          return ResponseEntity.ok(token);
      }
 }
+
+/*
+
+$body = @{
+    name = "User2"
+    email = "user2@test.com"
+    password = "Password123"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method POST -Uri "http://localhost:8090/users/auth/signUp" -ContentType "application/json" -Body $body
+
+ */

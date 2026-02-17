@@ -4,21 +4,24 @@ import com.sheemab.linkedin.connection_service.Entities.Person;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface PersonRepository extends Neo4jRepository<Person, Long> {
 
     Optional<Person> findByName(String name);
     boolean existsByUserId(Long userId);
 
-    @Query("MATCH (personA:Person) -[:CONNECTED_TO]- (personB:Person) " +
-            "WHERE id(personA) = $id " +
-            "RETURN personB")
-    //If we put -[]-> we get unidirectional connection and if we simply do -[]- we get BiDirectional connection
-    List<Person> getFirstDegreeConnections(Long userId);
+    @Query("""
+           MATCH (personA:Person {userId: $userId})-[:CONNECTED_TO]-(personB:Person)
+           RETURN personB
+       """)
+    List<Person> getFirstDegreeConnections(@Param("userId") Long userId);
+
 
 //    @Query("MATCH (p:Person)-[:CONNECTED_TO]-(connected) WHERE id(p) = $id RETURN connected")
 

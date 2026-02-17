@@ -2,7 +2,7 @@ package com.sheemab.linkedin.connection_service.Services;
 
 import com.sheemab.linkedin.connection_service.Entities.Person;
 import com.sheemab.linkedin.connection_service.Repository.PersonRepository;
-import com.sheemab.linkedin.connection_service.auth.UserContextHolder;
+import com.sheemab.linkedin.connection_service.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.events.AcceptConnectionRequestEvent;
@@ -23,7 +23,7 @@ public class ConnectionService {
 
     public List<Person> getFirstDegreeConnections() {
 
-        Long userId = UserContextHolder.getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
 
         log.info("[getFirstDegreeConnections] Request received");
 
@@ -45,7 +45,7 @@ public class ConnectionService {
 
     public Boolean sendConnectionRequest(Long receiverId) {
 
-        Long senderId = UserContextHolder.getCurrentUserId();
+        Long senderId = SecurityUtils.getCurrentUserId();
 
         log.info("[sendConnectionRequest] Request received, senderId={}, receiverId={}",
                 senderId, receiverId);
@@ -119,7 +119,7 @@ public class ConnectionService {
 
     public Boolean acceptConnectionRequest(Long senderId) {
 
-        Long receiverId = UserContextHolder.getCurrentUserId();
+        Long receiverId = SecurityUtils.getCurrentUserId();
 
         log.info("[acceptConnectionRequest] Request received, senderId={}, receiverId={}",
                 senderId, receiverId);
@@ -169,7 +169,7 @@ public class ConnectionService {
 
     public Boolean rejectConnectionRequest(Long senderId) {
 
-        Long receiverId = UserContextHolder.getCurrentUserId();
+        Long receiverId = SecurityUtils.getCurrentUserId();
 
         log.info("[rejectConnectionRequest] Request received, senderId={}, receiverId={}",
                 senderId, receiverId);
