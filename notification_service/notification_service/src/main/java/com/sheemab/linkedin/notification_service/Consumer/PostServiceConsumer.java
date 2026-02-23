@@ -3,12 +3,12 @@ package com.sheemab.linkedin.notification_service.Consumer;
 import com.sheemab.linkedin.notification_service.Dto.PersonDto;
 import com.sheemab.linkedin.notification_service.Service.SendNotification;
 import com.sheemab.linkedin.notification_service.client.ConnectionsClient;
-import com.sheemab.linkedin.post_service.Event.PostCommentEvent;
-import com.sheemab.linkedin.post_service.Event.PostCreatedEvent;
-import com.sheemab.linkedin.post_service.Event.PostLikedEvent;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.events.PostCommentEvent;
+import org.example.events.PostCreatedEvent;
+import org.example.events.PostLikedEvent;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +27,8 @@ public class PostServiceConsumer {
 
             try {
                 // Fetch connections
-                List<PersonDto> connections = connectionsClient.getFirstDegreeConnections(postCreatedEvent.getCreatorId());
+                List<PersonDto> connections = connectionsClient.getConnectionsByUserId(postCreatedEvent.getCreatorId());
+
                 log.info("Fetched {} connections for userId {}", connections.size(), postCreatedEvent.getCreatorId());
 
                 // Send notifications to connections

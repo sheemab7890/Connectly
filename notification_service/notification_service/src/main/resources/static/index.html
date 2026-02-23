@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Notifications</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 16px;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            color: #1a1a1a;
+            margin-bottom: 24px;
+        }
+
+        /* ── Login Card ── */
+        #loginCard {
+            background: white;
+            border-radius: 12px;
+            padding: 28px 32px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        }
+
+        #loginCard h2 { font-size: 1.1rem; margin-bottom: 16px; color: #333; }
+
+        input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus { border-color: #0073b1; }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #0073b1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background: #005f93; }
+
+        /* ── Notification Panel ── */
+        #notifPanel { display: none; width: 100%; max-width: 560px; }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            border-radius: 10px;
+            padding: 10px 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+            font-size: 0.88rem;
+            color: #555;
+        }
+
+        .dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: #ccc;
+            flex-shrink: 0;
+            transition: background 0.3s;
+        }
+        .dot.connected { background: #2ecc71; }
+        .dot.error     { background: #e74c3c; }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .panel-header h2 { font-size: 1rem; color: #333; }
+
+        #clearBtn {
+            width: auto;
+            padding: 6px 14px;
+            font-size: 0.82rem;
+            background: #eee;
+            color: #555;
+            border-radius: 6px;
+        }
+        #clearBtn:hover { background: #ddd; }
+
+        #notifList {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 480px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .notif-item {
+            background: white;
+            border-left: 4px solid #0073b1;
+            border-radius: 8px;
+            padding: 12px 16px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+            animation: slideIn 0.25s ease;
+        }
+
+        .notif-item.history { border-left-color: #aaa; }
+
+        .notif-msg  { font-size: 0.92rem; color: #222; margin-bottom: 4px; }
+        .notif-time { font-size: 0.75rem; color: #999; }
+
+        .empty-state {
+            text-align: center;
+            color: #aaa;
+            font-size: 0.9rem;
+            padding: 40px 0;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<h1>🔔 Notification Service</h1>
+
+<!-- Login -->
+<div id="loginCard">
+    <h2>Connect with your JWT token</h2>
+    <input type="text" id="tokenInput" placeholder="Paste your Bearer token here..." />
+    <button onclick="connect()">Connect &amp; Subscribe</button>
+</div>
+
+<!-- Notification panel (shown after connect) -->
+<div id="notifPanel">
+    <div class="status-bar">
+        <div class="dot" id="dot"></div>
+        <span id="statusText">Connecting…</span>
+    </div>
+
+    <div class="panel-header">
+        <h2>Your Notifications</h2>
+        <button id="clearBtn" onclick="clearList()">Clear</button>
+    </div>
+
+    <div id="notifList">
+        <div class="empty-state" id="emptyState">No notifications yet</div>
+    </div>
+</div>
+
+<script>
+    const BASE_URL = "http://localhost:9999";
+    let token = "";
+
+    /* ── Connect & subscribe ── */
+    async function connect() {
+        token = document.getElementById("tokenInput").value.trim();
+        if (!token) { alert("Please paste your JWT token."); return; }
+
+        document.getElementById("loginCard").style.display  = "none";
+        document.getElementById("notifPanel").style.display = "block";
+
+        await loadHistory();
+        subscribeSSE();
+    }
+
+    /* ── Load past notifications from REST ── */
+    async function loadHistory() {
+        try {
+            const res = await fetch(`${BASE_URL}/notifications`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) return;
+            const list = await res.json();
+            list.forEach(n => addItem(n.message, n.createdAT, true));
+        } catch (e) {
+            console.warn("Could not load history:", e);
+        }
+    }
+
+    /* ── SSE connection using fetch + ReadableStream ── */
+    async function subscribeSSE() {
+        setStatus("connecting");
+        try {
+            const res = await fetch(`${BASE_URL}/notifications/subscribe`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: "text/event-stream",
+                    "Cache-Control": "no-cache"
+                }
+            });
+
+            if (!res.ok) {
+                setStatus("error", "Auth failed – check your token");
+                return;
+            }
+
+            setStatus("connected", "Live – waiting for notifications");
+
+            const reader  = res.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let buffer    = "";
+            let eventName = "";
+            let eventData = "";
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) {
+                    setStatus("error", "Stream closed – reconnecting in 3s…");
+                    setTimeout(subscribeSSE, 3000);
+                    return;
+                }
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split("\n");
+                buffer = lines.pop();
+
+                for (const line of lines) {
+                    if (line.startsWith("event:")) {
+                        eventName = line.replace("event:", "").trim();
+                    } else if (line.startsWith("data:")) {
+                        eventData = line.replace("data:", "").trim();
+                    } else if (line === "" && eventData) {
+                        if (eventName === "NOTIFICATION") {
+                            addItem(eventData, new Date().toISOString(), false);
+                        }
+                        eventName = "";
+                        eventData = "";
+                    }
+                }
+            }
+        } catch (e) {
+            setStatus("error", "Connection error – reconnecting in 3s…");
+            setTimeout(subscribeSSE, 3000);
+        }
+    }
+
+    /* ── DOM helpers ── */
+    function addItem(message, timestamp, isHistory) {
+        const emptyState = document.getElementById("emptyState");
+        if (emptyState) emptyState.remove();
+
+        const list = document.getElementById("notifList");
+        const div  = document.createElement("div");
+        div.className = "notif-item" + (isHistory ? " history" : "");
+
+        const time = timestamp ? new Date(timestamp).toLocaleString() : "Just now";
+        div.innerHTML = `
+            <div class="notif-msg">${escapeHtml(message)}</div>
+            <div class="notif-time">${time}</div>
+        `;
+
+        // New real-time notifications go to top
+        list.insertBefore(div, list.firstChild);
+    }
+
+    function clearList() {
+        const list = document.getElementById("notifList");
+        list.innerHTML = `<div class="empty-state" id="emptyState">No notifications yet</div>`;
+    }
+
+    function setStatus(state, text) {
+        const dot  = document.getElementById("dot");
+        const span = document.getElementById("statusText");
+        dot.className = "dot " + (state === "connected" ? "connected" : state === "error" ? "error" : "");
+        span.textContent = text || (state === "connected" ? "Connected" : "Connecting…");
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+</script>
+</body>
+</html>

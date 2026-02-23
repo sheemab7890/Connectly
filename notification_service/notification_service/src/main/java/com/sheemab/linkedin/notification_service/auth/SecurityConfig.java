@@ -1,4 +1,5 @@
-package com.sheemab.linkedin.connection_service.auth;
+package com.sheemab.linkedin.notification_service.auth;
+
 
 
 import org.springframework.context.annotation.Bean;
@@ -29,17 +30,13 @@ public class SecurityConfig {
                 .sessionManagement(s ->
                         s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // 🔥 internal endpoint accessible without JWT
-                        .requestMatchers("/connections/core/internal/**").permitAll()
-                        // 🔐 all other endpoints require authentication
+                        .requestMatchers("/notifications/stream").authenticated()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(
-                        jwtFilter,
-                        UsernamePasswordAuthenticationFilter.class
-                );
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
 }
 

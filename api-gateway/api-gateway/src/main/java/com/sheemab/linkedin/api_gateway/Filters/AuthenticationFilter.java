@@ -5,10 +5,13 @@ import com.sheemab.linkedin.api_gateway.Service.JwtService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
+
+import java.util.List;
 
 
 @Component
@@ -32,17 +35,31 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
             log.info("Incoming request: {} {}", method, path);
 
+            String token = null;
+
+            // 1️⃣ Try Authorization header
             String header = exchange.getRequest()
                     .getHeaders()
                     .getFirst("Authorization");
 
-            if (header == null || !header.startsWith("Bearer ")) {
-                log.warn("Missing or invalid Authorization header for {} {}", method, path);
+            if (header != null && header.startsWith("Bearer ")) {
+                token = header.substring(7);
+            }
+
+            // 2️⃣ If not found, try cookie
+            if (token == null) {
+                List<HttpCookie> cookies =
+                        exchange.getRequest().getCookies().get("access_token");
+
+                if (cookies != null && !cookies.isEmpty()) {
+                    token = cookies.get(0).getValue();
+                }
+            }
+
+            if (token == null) {
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             }
-
-            String token = header.substring(7);
 
             try {
                 jwtService.validate(token);

@@ -1,6 +1,6 @@
 package com.sheemab.linkedin.post_service.Controllers;
 
-import com.sheemab.linkedin.post_service.Repositories.LikeRepository;
+
 import com.sheemab.linkedin.post_service.Services.LikeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

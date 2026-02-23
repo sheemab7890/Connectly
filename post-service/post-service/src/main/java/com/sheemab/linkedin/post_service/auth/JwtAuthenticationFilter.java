@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,7 +14,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
 import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -37,19 +37,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
 
-        // DEBUG LOG
-//        System.out.println("===== POST-SERVICE FILTER =====");
-//        System.out.println("Authorization header: " + request.getHeader("Authorization"));
-//        System.out.println("Request URI: " + request.getRequestURI());
+        String token = null;
 
+        // 1️⃣ Try header
         String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            token = header.substring(7);
+        }
 
-        if (header == null || !header.startsWith("Bearer ")) {
+        // 2️⃣ Try cookie if header missing
+        if (token == null && request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("access_token".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                }
+            }
+        }
+
+        if (token == null) {
             filterChain.doFilter(request, response);
             return;
         }
-
-        String token = header.substring(7); // get the token from header
 
         try {
             Claims claims = Jwts.parser()
@@ -60,21 +68,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             String userId = claims.getSubject(); // get userId
 
-            //List<String> roles = claims.get("role", List.class);
-
+//            List<String> roles = claims.get("roles", List.class);
+//
 //            List<GrantedAuthority> authorities =
 //                    roles.stream()
 //                            .map(role -> (GrantedAuthority)
 //                                    new SimpleGrantedAuthority("ROLE_" + role))
 //                            .toList();
 
-            // If you don't have roles, just use an empty list
+            // If the user doesnt have any role
             List<GrantedAuthority> authorities = Collections.emptyList();
 
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(
                             userId,  // 👈 This becomes principal
-                            token,  // Store token as credentials
+                            token,  // store token for feign call beacuse if token is not stored → Feign cannot forward it.
                             authorities
                     );
 
@@ -82,7 +90,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .setAuthentication(auth); //set user in security context holder
 
         } catch (Exception e) {
-            e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
@@ -90,4 +97,3 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 }
-

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login + SSE Test</title>
+</head>
+<body>
+
+<h2>Login</h2>
+
+<input id="email" placeholder="Email"><br><br>
+<input id="password" type="password" placeholder="Password"><br><br>
+<button onclick="login()">Login</button>
+
+<br><br>
+
+<button onclick="startSSE()">Start SSE</button>
+
+<h3>Notifications:</h3>
+<ul id="notifications"></ul>
+
+<script>
+
+    let eventSource = null;
+
+    function login() {
+
+        fetch("http://localhost:9876/api/v1/users/auth/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value
+            }),
+            credentials: "include"   // 🔥 IMPORTANT for cookie
+        })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error("Login failed");
+            }
+            return res.json();
+        })
+        .then(data => {
+            alert("Login successful!");
+            console.log("Login response:", data);
+        })
+        .catch(err => {
+            console.error("Login error:", err);
+            alert("Login failed!");
+        });
+    }
+
+    function startSSE() {
+
+        if (eventSource !== null) {
+            alert("SSE already started!");
+            return;
+        }
+
+        eventSource = new EventSource(
+            "http://localhost:9876/api/v1/notifications/stream"
+        );
+
+        eventSource.addEventListener("notification", function(event) {
+
+            console.log("New Notification:", event.data);
+
+            const li = document.createElement("li");
+            li.textContent = event.data;
+
+            document.getElementById("notifications").appendChild(li);
+        });
+
+        eventSource.onerror = function(error) {
+            console.error("SSE error:", error);
+        };
+
+        alert("SSE connection started!");
+    }
+
+</script>
+
+</body>
+</html>

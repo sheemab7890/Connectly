@@ -3,7 +3,7 @@ package com.sheemab.linkedin.connection_service.Controllers;
 import com.sheemab.linkedin.connection_service.Entities.Person;
 import com.sheemab.linkedin.connection_service.Services.ConnectionService;
 import lombok.RequiredArgsConstructor;
-import org.apache.kafka.common.protocol.types.Field;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +19,12 @@ public class ConnectionController {
     @GetMapping("/first-degree")
     public ResponseEntity<List<Person>> getFirstDegreeConnections(){
         return ResponseEntity.ok(connectionService.getFirstDegreeConnections());
+    }
+
+    //Internal use only
+    @GetMapping("/internal/{userId}/first-degree")
+    public ResponseEntity<List<Person>>  getConnectionsByUserId(@PathVariable Long userId){
+        return ResponseEntity.ok(connectionService.getConnectionsByUserId(userId));
     }
 
     @PostMapping("/request/{userId}")

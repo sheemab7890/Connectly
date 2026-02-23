@@ -1,10 +1,11 @@
 package com.sheemab.linkedin.notification_service.Consumer;
 
-import com.sheemab.linkedin.connection_service.Event.AcceptConnectionRequestEvent;
-import com.sheemab.linkedin.connection_service.Event.SendConnectionRequestEvent;
+
 import com.sheemab.linkedin.notification_service.Service.SendNotification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.events.AcceptConnectionRequestEvent;
+import org.example.events.SendConnectionRequestEvent;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 

@@ -21,6 +21,7 @@ public class ConnectionService {
     private final KafkaTemplate<Long , Object> sendRequestKafkaTemplate;
     private final KafkaTemplate<Long , Object> acceptRequestKafkaTemplate;
 
+    // For Authentication-Related
     public List<Person> getFirstDegreeConnections() {
 
         Long userId = SecurityUtils.getCurrentUserId();
@@ -29,6 +30,26 @@ public class ConnectionService {
 
         if (userId == null) {
             log.error("[getFirstDegreeConnections] User ID is null in context");
+            throw new IllegalStateException("User ID cannot be null.");
+        }
+
+        log.info("[getFirstDegreeConnections] Fetching first degree connections for userId={}", userId);
+
+        List<Person> connections = personRepository.getFirstDegreeConnections(userId);
+
+        log.info("[getFirstDegreeConnections] Total connections found={}, userId={}",
+                connections.size(), userId);
+
+        return connections;
+    }
+
+    //For Kafka/Internal System
+    public List<Person> getConnectionsByUserId(Long userId) {
+
+        log.info("[getFirstDegreeConnections] Request received");
+
+        if (userId == null) {
+            log.error("[getFirstDegreeConnections] User ID is null");
             throw new IllegalStateException("User ID cannot be null.");
         }
 

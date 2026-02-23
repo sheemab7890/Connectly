@@ -6,6 +6,8 @@ import com.sheemab.linkedin.user_service.DTO.LoginRequestDto;
 import com.sheemab.linkedin.user_service.DTO.SignUpRequestDto;
 import com.sheemab.linkedin.user_service.DTO.UserDto;
 import com.sheemab.linkedin.user_service.Services.UserService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,11 +28,27 @@ public class AuthController {
          return new ResponseEntity<>(signUp, HttpStatus.CREATED);
      }
 
-     @PostMapping("/logIn")
-    public ResponseEntity<LogInResponseDto> logIn(@RequestBody LoginRequestDto loginRequestDto){
-         LogInResponseDto token  = userService.logIn(loginRequestDto);
-         return ResponseEntity.ok(token);
-     }
+
+     // Now browser will store JWT automatically.
+    @PostMapping("/login")
+    public ResponseEntity<LogInResponseDto> login(
+            @RequestBody LoginRequestDto request,
+            HttpServletResponse response) {
+
+        LogInResponseDto loginResponse = userService.logIn(request);
+
+        String token = loginResponse.getAccessToken();
+
+        Cookie cookie = new Cookie("access_token", token); // How to set anything in cookie
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false); //  false because you are using HTTP
+        cookie.setPath("/");
+        cookie.setMaxAge(60 * 10); // 10 minutes
+
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok(loginResponse);
+    }
 }
 
 /*

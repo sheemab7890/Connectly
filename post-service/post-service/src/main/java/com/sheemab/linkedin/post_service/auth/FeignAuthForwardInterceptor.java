@@ -2,12 +2,10 @@ package com.sheemab.linkedin.post_service.auth;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
+
 
 /**
  * FeignAuthForwardInterceptor
@@ -31,7 +29,7 @@ public class FeignAuthForwardInterceptor implements RequestInterceptor {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication != null && authentication.getCredentials() != null) {
-            String token = (String) authentication.getCredentials();
+            String token = (String) authentication.getCredentials();  // So if token is not stored → Feign cannot forward it.
             template.header("Authorization", "Bearer " + token);
         }
     }

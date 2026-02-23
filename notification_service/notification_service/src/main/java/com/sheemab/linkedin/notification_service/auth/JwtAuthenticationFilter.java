@@ -1,4 +1,4 @@
-package com.sheemab.linkedin.connection_service.auth;
+package com.sheemab.linkedin.notification_service.auth;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -39,13 +39,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = null;
 
-         // 1️⃣ Try header
+        // 1️⃣ Try header
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
             token = header.substring(7);
         }
 
-       // 2️⃣ Try cookie if header missing
+        // 2️⃣ Try cookie if header missing
         if (token == null && request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
                 if ("access_token".equals(cookie.getName())) {
@@ -97,4 +97,3 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 }
-
